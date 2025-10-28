@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hippo Health</title>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+        background: #0a0e27;
+        color: #fff;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+      }
+
+      /* ========== Animated Background with Converging Lines ========== */
+      .bg-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        background: linear-gradient(135deg, #0a0e27 0%, #0d1117 100%);
+        perspective: 400px;
+        overflow: hidden;
+      }
+
+      .lines-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 200%;
+        height: 200%;
+        transform: translate(-50%, -50%) rotateX(60deg);
+        transform-style: preserve-3d;
+      }
+
+      /* Vertical lines for floor effect */
+      .vertical-line {
+        position: absolute;
+        width: 4px;
+        height: 150%;
+        top: 50%;
+        left: 50%;
+        transform-origin: center top;
+        animation: moveVertical 3s linear infinite;
+      }
+
+      .vertical-line::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          180deg,
+          transparent 0%,
+          var(--line-color) 45%,
+          var(--line-color) 55%,
+          transparent 100%
+        );
+        box-shadow: 0 0 15px var(--line-color), 0 0 30px var(--line-color);
+        filter: blur(1px);
+      }
+
+      /* Updated to target correct child numbers (1-8 instead of 21-28) */
+      .vertical-line:nth-child(1) {
+        --line-color: #7dd3fc;
+        --x-pos: -600px;
+        animation-delay: 0s;
+      }
+      .vertical-line:nth-child(2) {
+        --line-color: #60a5fa;
+        --x-pos: -400px;
+        animation-delay: 0.4s;
+      }
+      .vertical-line:nth-child(3) {
+        --line-color: #818cf8;
+        --x-pos: -200px;
+        animation-delay: 0.8s;
+      }
+      .vertical-line:nth-child(4) {
+        --line-color: #a78bfa;
+        --x-pos: 0px;
+        animation-delay: 1.2s;
+      }
+      .vertical-line:nth-child(5) {
+        --line-color: #c084fc;
+        --x-pos: 200px;
+        animation-delay: 1.6s;
+      }
+      .vertical-line:nth-child(6) {
+        --line-color: #fb7185;
+        --x-pos: 400px;
+        animation-delay: 2s;
+      }
+      .vertical-line:nth-child(7) {
+        --line-color: #fda4af;
+        --x-pos: 600px;
+        animation-delay: 2.4s;
+      }
+      .vertical-line:nth-child(8) {
+        --line-color: #fb923c;
+        --x-pos: 800px;
+        animation-delay: 2.8s;
+      }
+
+      @keyframes moveVertical {
+        0% {
+          transform: translate(-50%, -50%) translateX(var(--x-pos, 0px))
+            translateZ(200px) rotateX(90deg);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+        }
+        90% {
+          opacity: 1;
+        }
+        100% {
+          transform: translate(-50%, -50%) translateX(var(--x-pos, 0px))
+            translateZ(-1200px) rotateX(90deg);
+          opacity: 0;
+        }
+      }
+
+      /* Ambient glow */
+      .glow-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(
+          circle,
+          rgba(168, 139, 250, 0.4) 0%,
+          rgba(139, 92, 246, 0.2) 40%,
+          transparent 70%
+        );
+        filter: blur(80px);
+        animation: pulse 15s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 0.7;
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.3);
+          opacity: 1;
+        }
+      }
+
+      /* Dark overlay for text readability */
+      .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        background: radial-gradient(
+          ellipse at center,
+          rgba(0, 0, 0, 0.2),
+          rgba(0, 0, 0, 0.5)
+        );
+        pointer-events: none;
+      }
+
+      /* ========== Navigation ========== */
+      .nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
+        backdrop-filter: blur(10px);
+      }
+
+      .brand {
+        font-size: 1.5rem;
+        font-weight: bold; /* Makes it bold */
+        font-style: italic; /* Makes it italic */
+        font-family: Georgia, "Times New Roman", Times, serif; /* Serif font */
+        letter-spacing: 0.5px;
+        cursor: pointer; /* Shows hand cursor on hover */
+        transition: color 0.3s, transform 0.2s; /* Smooth hover effect */
+      }
+
+      .brand:hover {
+        color: #074273; /* Matches your accent color */
+        transform: scale(1.05); /* Slight scale effect */
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 2rem;
+      }
+
+      .nav-links a {
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s;
+      }
+
+      .nav-links a:hover {
+        color: #7dd3fc;
+      }
+
+      /* ========== Horizontal Scroll Container ========== */
+      .h-scroll-wrapper {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+      }
+
+      .h-scroll {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        display: flex;
+        transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        will-change: transform;
+      }
+
+      .panel {
+        width: 100vw;
+        height: 100vh;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+
+      /* Content cards */
+      .card {
+        max-width: 900px;
+        width: 100%;
+        padding: 3rem;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        border-radius: 20px;
+        backdrop-filter: blur(20px) saturate(150%);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      }
+
+      h1 {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 700;
+        line-height: 1.2;
+        margin-bottom: 1.5rem;
+      }
+
+      h2 {
+        font-size: clamp(1.75rem, 4vw, 2.5rem);
+        font-weight: 600;
+        line-height: 1.3;
+        margin-bottom: 1.5rem;
+      }
+
+      p,
+      li {
+        font-size: 1.125rem;
+        line-height: 1.7;
+        color: #e5e5e5;
+      }
+
+      .accent {
+        color: #7dd3fc;
+      }
+
+      .muted {
+        color: #d4d4d4;
+      }
+
+      .brand-name {
+        font-size: 1.5em; /* 150% of the h1 size */
+        font-weight: 800;
+        letter-spacing: 1px;
+      }
+
+      .subtitle {
+        font-size: 1em; /* 60% of the h1 size */
+        font-weight: 600;
+        letter-spacing: 0.25px;
+      }
+
+      ul,
+      ol {
+        margin: 1rem 0 1.5rem 1.5rem;
+      }
+
+      li {
+        margin-bottom: 1rem;
+      }
+
+      .cta-row {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 1rem 2rem;
+        background: #7dd3fc;
+        color: #0a0e27;
+        text-decoration: none;
+        font-weight: 600;
+        border-radius: 12px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(125, 211, 252, 0.4);
+      }
+
+      .btn.secondary {
+        background: transparent;
+        color: #fff;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .btn.secondary:hover {
+        border-color: #7dd3fc;
+        box-shadow: 0 10px 25px rgba(125, 211, 252, 0.2);
+      }
+
+      /* Panel indicators */
+      .indicators {
+        position: fixed;
+        right: 2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .indicator.active {
+        background: #7dd3fc;
+        transform: scale(1.3);
+      }
+
+      @media (max-width: 768px) {
+        .nav-links {
+          display: none;
+        }
+
+        .card {
+          padding: 2rem 1.5rem;
+        }
+
+        .indicators {
+          right: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Animated Background with Converging Lines -->
+    <div class="bg-canvas">
+      <div class="glow-center"></div>
+      <div class="lines-container">
+        <!-- Vertical floor lines INSIDE the container -->
+        <div class="vertical-line"></div>
+        <div class="vertical-line"></div>
+        <div class="vertical-line"></div>
+        <div class="vertical-line"></div>
+        <div class="vertical-line"></div>
+        <div class="vertical-line"></div>
+        <div class="vertical-line"></div>
+        <div class="vertical-line"></div>
+      </div>
+    </div>
+    <div class="overlay"></div>
+
+    <!-- Navigation -->
+    <nav class="nav">
+      <div class="brand" onclick="scrollToPanel(0)">h.</div>
+      <div class="nav-links">
+        <a href="#" onclick="scrollToPanel(4); return false;">Join</a>
+      </div>
+    </nav>
+
+    <!-- Panel Indicators -->
+    <div class="indicators">
+      <div class="indicator active" onclick="scrollToPanel(0)"></div>
+      <div class="indicator" onclick="scrollToPanel(1)"></div>
+      <div class="indicator" onclick="scrollToPanel(2)"></div>
+      <div class="indicator" onclick="scrollToPanel(3)"></div>
+      <div class="indicator" onclick="scrollToPanel(4)"></div>
+    </div>
+
+    <!-- Horizontal Scroll Container -->
+    <div class="h-scroll-wrapper">
+      <div class="h-scroll" id="hScroll">
+        <!-- Panel 1: Vision -->
+        <section class="panel">
+          <div class="card">
+            <h1>
+              <span class="brand-name">hippo.</span>
+              <span class="accent subtitle">
+                | AI-Powered Healthcare Platform</span
+              >
+            </h1>
+            <p class="muted">
+              "Digitizing Healthcare | One Technology, Infinite Possibilities"
+            </p>
+            <div class="cta-row">
+              <button class="btn" onclick="scrollToPanel(1)">
+                Explore benefits
+              </button>
+              <button class="btn secondary" onclick="scrollToPanel(4)">
+                Sign Up
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Panel 2: Benefits -->
+        <section class="panel">
+          <div class="card">
+            <h2>Digital Health Revolution from India</h2>
+            <ul class="muted">
+              <li>
+                Digitizing Health Records to power Healthcare Infrastructure &
+                Technology.
+              </li>
+              <li>
+                Appointments Management System through Intelligent
+                pre-assessment and Automated Triage.
+              </li>
+              <li>
+                Reducing Diagnostic Delays, Cutting Healthcare Costs & building
+                the Foundation for Universal Digital Healthcare System.
+              </li>
+              <li>
+                One Patient, One ID across the nation—lifetime digital health
+                passport accessible from anywhere. No physical records anymore.
+              </li>
+              <li>
+                Built for Everyone, A complete ecosystem designed to serve
+                Doctors, Patients, and Healthcare Infrastructure.
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Panel 3: Roadmap -->
+        <section class="panel">
+          <div class="card">
+            <h2>Today's Foundation, Future Technology</h2>
+            <ol class="muted">
+              <li>Digitization Health Records.</li>
+              <li>Building Diagnostic specific Artificial Intelligence.</li>
+              <li>
+                Streamlining Healthcare Infrastructure for Faster & Accurate
+                Healthcare Services.
+              </li>
+            </ol>
+          </div>
+        </section>
+
+        <!-- Panel 4: Opportunity -->
+        <section class="panel">
+          <div class="card">
+            <h2>Prospects</h2>
+            <ol class="muted">
+              <li>
+                Digital Health is the future of Healthcare Infrastructure.
+              </li>
+              <li>
+                Seamless Integration with exiting Government Health Programs
+                like Aayushman Bharat Abhiyan(India).
+              </li>
+              <li>
+                Doctors, Hospitals & Patients reap the benefits of Digital
+                Healthcare Technology.
+              </li>
+            </ol>
+          </div>
+        </section>
+
+        <!-- Panel 5: Join (SignUp) -->
+        <section class="panel">
+          <div class="card">
+            <h2>Ready to Transform Healthcare?</h2>
+            <p class="muted">Join to build the digital health future</p>
+            <div class="cta-row">
+              <button class="btn">Join Now</button>
+              <button class="btn">Contact Us</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      let currentPanel = 0;
+      const totalPanels = 5;
+      const scrollContainer = document.getElementById("hScroll");
+      const indicators = document.querySelectorAll(".indicator");
+
+      let isScrolling = false;
+      let touchStartX = 0;
+      let touchEndX = 0;
+
+      // Scroll to specific panel
+      function scrollToPanel(index) {
+        if (index < 0 || index >= totalPanels || isScrolling) return;
+
+        isScrolling = true;
+        currentPanel = index;
+
+        const offset = -index * window.innerWidth;
+        scrollContainer.style.transform = `translateX(${offset}px)`;
+
+        updateIndicators();
+
+        setTimeout(() => {
+          isScrolling = false;
+        }, 600);
+      }
+
+      // Update indicator dots
+      function updateIndicators() {
+        indicators.forEach((ind, idx) => {
+          if (idx === currentPanel) {
+            ind.classList.add("active");
+          } else {
+            ind.classList.remove("active");
+          }
+        });
+      }
+
+      // Mouse wheel / trackpad scroll
+      let scrollAccumulator = 0;
+      const scrollThreshold = 50;
+
+      window.addEventListener(
+        "wheel",
+        (e) => {
+          e.preventDefault();
+
+          if (isScrolling) return;
+
+          // Use deltaY for vertical wheel, deltaX for horizontal trackpad gesture
+          const delta =
+            Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+          scrollAccumulator += delta;
+
+          // Scroll to next panel when threshold is reached
+          if (Math.abs(scrollAccumulator) >= scrollThreshold) {
+            if (scrollAccumulator > 0 && currentPanel < totalPanels - 1) {
+              scrollToPanel(currentPanel + 1);
+            } else if (scrollAccumulator < 0 && currentPanel > 0) {
+              scrollToPanel(currentPanel - 1);
+            }
+            scrollAccumulator = 0;
+          }
+        },
+        { passive: false }
+      );
+
+      // Keyboard navigation
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight" && currentPanel < totalPanels - 1) {
+          scrollToPanel(currentPanel + 1);
+        } else if (e.key === "ArrowLeft" && currentPanel > 0) {
+          scrollToPanel(currentPanel - 1);
+        }
+      });
+
+      // Touch/swipe support
+      window.addEventListener("touchstart", (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      });
+
+      window.addEventListener("touchend", (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+      });
+
+      function handleSwipe() {
+        const swipeThreshold = 50;
+        const diff = touchStartX - touchEndX;
+
+        if (Math.abs(diff) > swipeThreshold) {
+          if (diff > 0 && currentPanel < totalPanels - 1) {
+            scrollToPanel(currentPanel + 1);
+          } else if (diff < 0 && currentPanel > 0) {
+            scrollToPanel(currentPanel - 1);
+          }
+        }
+      }
+
+      // Reset scroll accumulator after inactivity
+      let resetTimeout;
+      window.addEventListener("wheel", () => {
+        clearTimeout(resetTimeout);
+        resetTimeout = setTimeout(() => {
+          scrollAccumulator = 0;
+        }, 200);
+      });
+    </script>
+  </body>
+</html>
